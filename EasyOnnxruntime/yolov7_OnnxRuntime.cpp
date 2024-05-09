@@ -11,6 +11,9 @@ yolov7_OnnxRuntime::yolov7_OnnxRuntime()
 yolov7_OnnxRuntime::~yolov7_OnnxRuntime()
 {
     delete m_session;
+    delete m_allocator;
+    delete m_session_options;
+    delete m_env;
     for (auto ptr : m_input_node_names)
         m_allocator->Free(ptr);
     for (auto ptr : m_output_node_names)
@@ -85,7 +88,7 @@ std::vector<OutResult> yolov7_OnnxRuntime::Detect(float minConfidence, std::stri
     return resultVector;
 }
 
-std::vector<OutResult> yolov7_OnnxRuntime::Detect(float minConfidence, HBITMAP hBitmap, int width, int height)
+std::vector<OutResult> yolov7_OnnxRuntime::Detect(float minConfidence, HBITMAP hBitmap)
 {
     Gdiplus::Bitmap* bitmap = Gdiplus::Bitmap::FromHBITMAP(hBitmap, NULL);
     std::vector<OutResult> resultVector = Detect(bitmap, minConfidence);
