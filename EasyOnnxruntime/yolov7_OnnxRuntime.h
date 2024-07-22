@@ -16,15 +16,15 @@ typedef struct OutResult {
     int x2;
     int y1;
     int y2;
-    int obj_id;
-    float accuracy;
-    OutResult(int x1_, int x2_, int y1_, int y2_, int obj_id_, float accuracy_) {
+    int classId;
+    float confidence;
+    OutResult(int x1_, int x2_, int y1_, int y2_, int classId_, float confidence_) {
         x1 = x1_;
         x2 = x2_;
         y1 = y1_;
         y2 = y2_;
-        obj_id = obj_id_;
-        accuracy = accuracy_;
+        classId = classId_;
+        confidence = confidence_;
     }
 };
 
@@ -35,7 +35,7 @@ public:
     ~yolov7_OnnxRuntime();
     bool readModel(std::string onnxPath, int classNums, ...);
     std::vector<OutResult> Detect(float minConfidence, std::string fileName);
-    std::vector<OutResult> Detect(float minConfidence, HBITMAP hBitmap, int width, int height);
+    std::vector<OutResult> Detect(float minConfidence, HBITMAP hBitmap);
 private:
     std::string img2Float(Gdiplus::Bitmap* bitmap); //ͼƬתfloat
     std::vector<OutResult> Detect(Gdiplus::Bitmap* orginalBitmap, float minConfidence);

@@ -112,9 +112,9 @@ std::string yolov7_OnnxRuntime::img2Float(Gdiplus::Bitmap* bitmap)
     m_resizedWidth = cols * scale;
     m_resizedHeight = rows * scale;
 
-    Gdiplus::Bitmap* resizedBitmap = new Gdiplus::Bitmap(cols * scale, rows * scale, PixelFormat24bppRGB);
+    Gdiplus::Bitmap* resizedBitmap = new Gdiplus::Bitmap(m_resizedWidth, m_resizedHeight, PixelFormat24bppRGB);
     Gdiplus::Graphics graphics(resizedBitmap);
-    graphics.DrawImage(bitmap, Gdiplus::Rect(0, 0, cols * scale, rows * scale));
+    graphics.DrawImage(bitmap, Gdiplus::Rect(0, 0, m_resizedWidth, m_resizedHeight));
 
     //绘制到中间
     Gdiplus::Bitmap paddingBitmap(m_model_input_width, m_model_input_height, PixelFormat24bppRGB);
@@ -177,7 +177,9 @@ std::vector<OutResult> yolov7_OnnxRuntime::Detect(Gdiplus::Bitmap* orginalBitmap
         m_num_output_nodes);
     auto* rawOutput = outputTensors[0].GetTensorData<float>();
     std::vector<int64_t> outputShape = outputTensors[0].GetTensorTypeAndShapeInfo().GetShape();
+
     size_t count = outputTensors[0].GetTensorTypeAndShapeInfo().GetElementCount();
+
     std::vector<float> output(rawOutput, rawOutput + count);
 
     std::vector<OutResult> resultVector;
@@ -186,21 +188,21 @@ std::vector<OutResult> yolov7_OnnxRuntime::Detect(Gdiplus::Bitmap* orginalBitmap
         float y1 = output[i * outputShape[1] + 2];
         float x2 = output[i * outputShape[1] + 3];
         float y2 = output[i * outputShape[1] + 4];
-        int classPrediction = output[i * outputShape[1] + 5];
-        float accuracy = output[i * outputShape[1] + 6];
+        int classId = output[i * outputShape[1] + 5];
+        float confidence = output[i * outputShape[1] + 6];
         // Coords should be scaled to the original image. The coords from the model are relative to the model's input height and width.
         x1 = ((x1 - m_offsetX) / m_resizedWidth) * orginalBitmap->GetWidth();
         x2 = ((x2 - m_offsetX) / m_resizedWidth) * orginalBitmap->GetWidth();
         y1 = ((y1 - m_offsetY) / m_resizedHeight) * orginalBitmap->GetHeight();
         y2 = ((y2 - m_offsetY) / m_resizedHeight) * orginalBitmap->GetHeight();
-        OutResult result(x1, x2, y1, y2, classPrediction, accuracy);
+        OutResult result(x1, x2, y1, y2, classId, confidence);
         resultVector.push_back(result);
     }
 
     //输出结果
     for (auto result : resultVector) {
-        if (result.accuracy > minConfidence) {
-            printf("x1:%d y1:%d x2:%d y2:%d id:%d name:%s confidience:%f\n", result.x1, result.y1, result.x2, result.y2, result.obj_id, m_classNames[result.obj_id], result.accuracy);
+        if (result.confidence > minConfidence) {
+            printf("x1:%d y1:%d x2:%d y2:%d id:%d name:%s confidience:%f\n", result.x1, result.y1, result.x2, result.y2, result.classId, m_classNames[result.classId], result.confidence);
         }
     }
     delete newBitmap;
